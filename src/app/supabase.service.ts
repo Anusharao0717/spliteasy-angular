@@ -22,7 +22,7 @@ export class SupabaseService {
 
   readonly configured =
     environment.supabaseUrl.startsWith('https://') &&
-    !environment.supabaseAnonKey.includes('YOUR_SUPABASE');
+    !environment.supabaseAnonKey.includes('sb_publishable_hTqdhILf9Sm1ijkvB8wB4w_OqFngvbE');
 
   readonly client: SupabaseClient | null = this.configured
     ? createClient(
