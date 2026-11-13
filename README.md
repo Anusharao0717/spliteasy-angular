@@ -1,54 +1,65 @@
-# SplitEasy — Angular + Supabase
+# SplitEasy – Angular + Supabase
 
-A responsive group bill splitter with groups, members, item assignment, proportional discounts/charges, payment status, bill history, WhatsApp sharing and receipt image upload.
+A standalone Angular expense-splitting starter with Supabase email/password authentication, groups, group members, bills, item-wise assignments, proportional split calculations, payment tracking, receipt uploads, WhatsApp sharing, responsive layout and light/dark theme.
 
-## Requirements
-- Node.js 20.19+ (or a Node version supported by Angular 20)
-- npm
-- A Supabase project
+## Important
 
-## 1. Install
-```bash
-npm install
+This ZIP is a clean, self-contained replacement starter, not a verified patch against every unprovided file in your existing repository. Back up your current repository before replacing files. The Supabase Publishable key is intended for browser use; never add a Supabase Secret/service-role key to Angular.
+
+## 1. Configure Supabase
+
+Edit `src/environments/environment.ts`:
+
+```ts
+export const environment = {
+  production: true,
+  supabaseUrl: 'https://YOUR_PROJECT_REF.supabase.co',
+  supabaseAnonKey: 'sb_publishable_YOUR_PUBLISHABLE_KEY'
+};
 ```
 
-## 2. Configure Supabase
-1. Create a project at https://supabase.com/dashboard.
-2. Open Project Settings → API.
-3. Copy the Project URL and anon/publishable key.
-4. Paste them into `src/environments/environment.ts`.
-5. Never use the `service_role` key in frontend code.
+Use the Project URL and Publishable key from Supabase → Project Settings → API Keys.
 
-## 3. Create database and storage
+In Supabase → Authentication → Providers, enable Email. In Authentication → URL Configuration, add:
+- `http://localhost:4200/`
+- `https://YOUR_GITHUB_USERNAME.github.io/spliteasy-angular/`
+
+## 2. Create database tables
+
 Open Supabase → SQL Editor, paste and run `supabase/schema.sql`.
 
-The SQL creates groups, members, bills, bill items and payments tables, RLS policies, and a receipts storage bucket (public image URLs; authenticated uploads).
+The schema enables RLS and gives each signed-in user access only to groups they own. This starter does not yet implement invitations or shared multi-user group membership; other accounts cannot access an owner's group by default.
 
-## 4. Run
+The SQL creates a private `receipts` bucket. The app uses signed URLs for receipts.
+
+## 3. Run locally
+
+Requirements: Node.js 22 (or a compatible Angular 20-supported release).
+
 ```bash
+npm install
 npm start
 ```
+
 Open http://localhost:4200.
 
-## 5. First use
-1. Create an account and sign in.
-2. Create a group (e.g. Friends).
-3. Open Groups and add members.
-4. Select the group and choose Create bill.
-5. Add items, assign one or more members to each item.
-6. Enter discount and extra charges; upload a receipt image if desired.
-7. Save the bill to see the split, mark payments as paid, or share the settlement via WhatsApp.
+## 4. Deploy to GitHub Pages
 
-## Calculation rules
-- An item's line total is quantity × unit price.
-- If multiple members are assigned to an item, that line is split equally between them.
-- The overall discount is allocated proportionally across item subtotals.
-- Handling, delivery and surge charges are allocated proportionally based on each member's discounted item share.
-- Currency values are rounded to two decimals; rounding remainder is applied to the last member so the displayed split reconciles to the bill total.
+The included workflow builds with base href `/spliteasy-angular/` and deploys `dist/spliteasy-angular/browser`.
 
-## Important implementation notes
-- This starter uses owner-only group access. It is not yet a collaborative invite system: members are entries in a group, not Supabase login accounts.
-- Receipt uploads use a public bucket so saved receipt links can be opened directly. For sensitive receipts, switch to a private bucket, use signed URLs, and add storage object policies that verify the group owner from the first folder segment.
-- The bill and item inserts are currently separate requests. For production-grade atomic saves, move bill creation and item insertion into a PostgreSQL RPC transaction.
-- Payment tracking records paid/unpaid state per member and bill; it does not process money.
-- Add email verification redirect URLs in Supabase Authentication → URL Configuration before production deployment.
+1. Push this project to the `main` branch of `Anusharao0717/spliteasy-angular` (or update the repository name/base href in the workflow).
+2. In GitHub repository Settings → Pages, select **GitHub Actions** as the build and deployment source.
+3. Open Actions and monitor the workflow.
+4. Visit `https://Anusharao0717.github.io/spliteasy-angular/`.
+
+## Notes and current scope
+
+- Auth: email/password signup and login. If email confirmation is enabled, verify the confirmation email before signing in.
+- Groups: owner-created groups and member records.
+- Bills: items can be assigned to one or more group members. Item costs are split equally among the selected assignees; discount and extra charges are allocated proportionally.
+- Payments: per-member paid/unpaid status.
+- Receipt storage: private bucket and signed URL.
+- WhatsApp: creates a share link with the current split.
+- History: loaded across groups owned by the signed-in user.
+
+This is a starter implementation. Test database policies, authentication confirmation, uploads and deployment in your own Supabase/GitHub projects before using real financial data. For genuine multi-user shared groups, add invitations and membership-based RLS policies rather than making tables public.
