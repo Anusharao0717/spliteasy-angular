@@ -1,7 +1,0 @@
-// Replace these values with your Supabase Project URL and anon/publishable key.
-// Never put a Supabase service_role key in a browser application.
-export const environment = {
-  production: false,
-  supabaseUrl: 'https://cucazwofsdizlxkdolkm.supabase.co',
-  supabaseAnonKey: 'sb_publishable_hTqdhILf9Sm1ijkvB8wB4w_OqFngvbE'
-};
