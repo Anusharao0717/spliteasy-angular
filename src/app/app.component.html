@@ -1,130 +1,1040 @@
-<div class="app-shell">
-  <aside class="sidebar">
-    <a class="brand" href="#" (click)="$event.preventDefault(); activeTab='overview'">
-      <span class="brand-mark">S</span><span>Split<span class="brand-accent">Easy</span></span>
-    </a>
-    <div class="workspace-label">WORKSPACE</div>
-    <button class="nav-link" [class.active]="activeTab==='overview'" (click)="activeTab='overview'"><span>▦</span> Overview</button>
-    <button class="nav-link" [class.active]="activeTab==='groups'" (click)="activeTab='groups'"><span>◫</span> Groups</button>
-    <button class="nav-link" [class.active]="activeTab==='history'" (click)="activeTab='history'"><span>◷</span> Bill history</button>
-    <div class="sidebar-bottom">
-      <button class="nav-link" (click)="toggleTheme()"><span>{{ darkMode ? '☀' : '☾' }}</span>{{ darkMode ? 'Light mode' : 'Dark mode' }}</button>
-      <div class="profile" *ngIf="isAuthenticated">
-        <div class="avatar">{{ userEmail.charAt(0).toUpperCase() }}</div>
-        <div class="profile-copy"><strong>{{ userEmail }}</strong><small>Signed in</small></div>
-        <button class="icon-button" title="Sign out" (click)="logout()">↗</button>
-      </div>
-    </div>
-  </aside>
 
-  <main class="main-content">
-    <header class="topbar">
-      <div><div class="eyebrow">YOUR EXPENSES, SIMPLIFIED</div><h1>{{ activeTab === 'overview' ? 'Overview' : activeTab === 'groups' ? 'Your groups' : 'Bill history' }}</h1></div>
-      <div class="top-actions">
-        <button class="theme-mobile icon-button" (click)="toggleTheme()" [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">{{ darkMode ? '☀' : '☾' }}</button>
-        <button class="button button-primary" *ngIf="isAuthenticated && selectedGroup" (click)="showBillForm=true">＋ Create bill</button>
+<!-- ============================================= -->
+<!-- SPLITEASY APPLICATION -->
+<!-- ============================================= -->
+
+<div class="app-shell" [class.dark-theme]="darkMode">
+
+  <!-- =========================================== -->
+  <!-- AUTHENTICATION SCREEN -->
+  <!-- =========================================== -->
+
+  <section class="auth-screen" *ngIf="!isAuthenticated">
+
+    <div class="auth-card">
+
+      <div class="brand-logo">
+        <span class="logo-icon">₹</span>
+        <h1>SplitEasy</h1>
       </div>
+
+      <p class="auth-subtitle">
+        Split bills. Share expenses. Stay friends.
+      </p>
+
+      <div class="auth-heading">
+        <h2>
+          {{ authMode === 'signin' ? 'Welcome back!' : 'Create your account' }}
+        </h2>
+
+        <p>
+          {{
+            authMode === 'signin'
+              ? 'Sign in to manage your shared expenses.'
+              : 'Create an account to start splitting bills.'
+          }}
+        </p>
+      </div>
+
+      <form (ngSubmit)="authenticate()" #authForm="ngForm">
+
+        <div class="form-group">
+
+          <label for="email">Email address</label>
+
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="Enter your email"
+            autocomplete="email"
+            required
+            email
+          />
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="password">Password</label>
+
+          <input
+            id="password"
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="Enter your password"
+            [attr.autocomplete]="authMode === 'signin' ? 'current-password' : 'new-password'"
+            minlength="6"
+            required
+          />
+
+        </div>
+
+        <div class="alert alert-error" *ngIf="error">
+          {{ error }}
+        </div>
+
+        <div class="alert alert-success" *ngIf="notice">
+          {{ notice }}
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary auth-submit"
+          [disabled]="busy || !authForm.valid"
+        >
+          <span *ngIf="!busy">
+            {{ authMode === 'signin' ? 'Sign In' : 'Create Account' }}
+          </span>
+
+          <span *ngIf="busy">
+            Please wait...
+          </span>
+        </button>
+
+      </form>
+
+      <div class="auth-switch">
+
+        <span>
+          {{
+            authMode === 'signin'
+              ? "Don't have an account?"
+              : 'Already have an account?'
+          }}
+        </span>
+
+        <button
+          type="button"
+          class="link-button"
+          (click)="switchAuthMode()"
+        >
+          {{ authMode === 'signin' ? 'Create Account' : 'Sign In' }}
+        </button>
+
+      </div>
+
+      <div class="auth-footer">
+        <span>Securely powered by Supabase</span>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- =========================================== -->
+  <!-- MAIN APPLICATION -->
+  <!-- =========================================== -->
+
+  <ng-container *ngIf="isAuthenticated">
+
+    <!-- HEADER -->
+
+    <header class="app-header">
+
+      <div class="header-brand">
+        <span class="logo-icon">₹</span>
+        <span>SplitEasy</span>
+      </div>
+
+      <div class="header-actions">
+
+        <span class="user-email">
+          {{ userEmail }}
+        </span>
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="toggleTheme()"
+        >
+          {{ darkMode ? '☀ Light' : '☾ Dark' }}
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="logout()"
+        >
+          Logout
+        </button>
+
+      </div>
+
     </header>
 
-    <div class="alert error" *ngIf="error" role="alert">{{ error }} <button (click)="error=''" aria-label="Dismiss">×</button></div>
-    <div class="alert success" *ngIf="notice">{{ notice }} <button (click)="notice=''" aria-label="Dismiss">×</button></div>
+    <!-- NAVIGATION -->
 
-    <section class="setup-card" *ngIf="!db.configured">
-      <div class="setup-icon">✦</div><div><h2>Connect your Supabase project</h2><p>Add your Project URL and anon/publishable key in <code>src/environments/environment.ts</code>, then run the SQL setup file included with this project.</p></div>
-    </section>
+    <nav class="main-nav">
 
-    <section class="auth-card" *ngIf="db.configured && !isAuthenticated">
-      <div class="auth-logo">S</div><p class="eyebrow">WELCOME TO SPLITEASY</p><h2>{{ authMode === 'signin' ? 'Sign in to your workspace' : 'Create your account' }}</h2>
-      <p class="muted">Keep every group bill and settlement in sync.</p>
-      <form (ngSubmit)="authenticate()">
-        <label>Email address<input type="email" name="email" [(ngModel)]="email" required autocomplete="email" placeholder="you@example.com"></label>
-        <label>Password<input type="password" name="password" [(ngModel)]="password" required minlength="6" autocomplete="current-password" placeholder="At least 6 characters"></label>
-        <button class="button button-primary full-width" [disabled]="busy">{{ busy ? 'Please wait…' : authMode === 'signin' ? 'Sign in' : 'Create account' }}</button>
-      </form>
-      <button class="text-button" (click)="authMode = authMode === 'signin' ? 'signup' : 'signin'">{{ authMode === 'signin' ? 'New to SplitEasy? Create an account' : 'Already have an account? Sign in' }}</button>
-    </section>
+      <button
+        type="button"
+        [class.active]="activeTab === 'overview'"
+        (click)="activeTab = 'overview'"
+      >
+        Overview
+      </button>
 
-    <ng-container *ngIf="isAuthenticated">
-      <section *ngIf="activeTab==='overview'">
-        <div class="welcome-row"><div><h2>Good to see you 👋</h2><p class="muted">Here's what's happening with your groups.</p></div><button class="button button-secondary" (click)="showGroupForm=true">＋ New group</button></div>
-        <div class="stats-grid">
-          <article class="stat-card"><span class="stat-icon violet">▤</span><span class="stat-label">Total bills</span><strong>{{ totalBills }}</strong><small>Across selected group</small></article>
-          <article class="stat-card"><span class="stat-icon green">₹</span><span class="stat-label">Total expenses</span><strong>{{ totalSpend | currency:'INR':'symbol':'1.2-2' }}</strong><small>Selected group total</small></article>
-          <article class="stat-card"><span class="stat-icon amber">♧</span><span class="stat-label">Group members</span><strong>{{ members.length }}</strong><small>{{ selectedGroup?.name || 'No group selected' }}</small></article>
-        </div>
-        <div class="content-grid">
-          <section class="panel group-panel"><div class="panel-heading"><div><h3>Your groups</h3><p class="muted">Choose a group to view its bills</p></div><button class="text-button" (click)="activeTab='groups'">View all</button></div>
-            <div class="empty-state" *ngIf="!groups.length"><div class="empty-icon">◫</div><strong>No groups yet</strong><p>Create a group to start splitting bills.</p><button class="button button-primary" (click)="showGroupForm=true">Create your first group</button></div>
-            <button class="group-row" *ngFor="let group of groups" [class.selected]="selectedGroup?.id===group.id" (click)="selectGroup(group)"><span class="group-symbol">{{ group.name.charAt(0).toUpperCase() }}</span><span class="group-info"><strong>{{ group.name }}</strong><small>{{ group.description || 'Expense group' }}</small></span><span class="chevron">›</span></button>
-          </section>
-          <section class="panel"><div class="panel-heading"><div><h3>Recent bills</h3><p class="muted">Latest activity in this group</p></div></div>
-            <div class="empty-state compact" *ngIf="!bills.length"><div class="empty-icon">▤</div><strong>No bills yet</strong><p>Your saved bills will appear here.</p></div>
-            <button class="bill-row" *ngFor="let bill of bills.slice(0,5)" (click)="openBill(bill)"><span class="bill-icon">▧</span><span class="bill-info"><strong>{{ bill.title }}</strong><small>{{ bill.bill_date | date:'mediumDate' }}</small></span><strong>{{ grandForBill(bill) | currency:'INR':'symbol':'1.2-2' }}</strong></button>
-          </section>
-        </div>
-      </section>
+      <button
+        type="button"
+        [class.active]="activeTab === 'groups'"
+        (click)="activeTab = 'groups'"
+      >
+        Groups
+      </button>
 
-      <section *ngIf="activeTab==='groups'">
-        <div class="section-intro"><div><h2>Manage your groups</h2><p class="muted">Create separate spaces for friends, family, trips or roommates.</p></div><button class="button button-primary" (click)="showGroupForm=true">＋ New group</button></div>
-        <div class="group-cards"><button class="group-card" *ngFor="let group of groups" [class.selected]="selectedGroup?.id===group.id" (click)="selectGroup(group)"><span class="group-symbol large">{{ group.name.charAt(0).toUpperCase() }}</span><h3>{{ group.name }}</h3><p>{{ group.description || 'Shared expenses' }}</p><span class="card-action">Open group →</span></button></div>
-        <section class="panel detail-panel" *ngIf="selectedGroup"><div class="panel-heading"><div><h3>{{ selectedGroup.name }} · Members</h3><p class="muted">People included in this group's bills</p></div><button class="button button-secondary" (click)="showMemberForm=true">＋ Add member</button></div>
-          <div class="member-list"><div class="member-row" *ngFor="let member of members"><span class="avatar">{{ member.name.charAt(0).toUpperCase() }}</span><span><strong>{{ member.name }}</strong><small>{{ member.email || 'Group member' }}</small></span></div></div>
-          <div class="empty-state compact" *ngIf="!members.length"><p>Add members before creating a bill.</p></div>
-        </section>
-      </section>
+      <button
+        type="button"
+        [class.active]="activeTab === 'history'"
+        (click)="activeTab = 'history'"
+      >
+        Bill History
+      </button>
 
-      <section *ngIf="activeTab==='history'">
-        <div class="section-intro"><div><h2>Bill history</h2><p class="muted">Every saved bill for {{ selectedGroup?.name || 'your selected group' }}.</p></div><button class="button button-primary" [disabled]="!selectedGroup" (click)="showBillForm=true">＋ Create bill</button></div>
-        <section class="panel"><div class="history-row" *ngFor="let bill of bills" (click)="openBill(bill)"><span class="bill-icon">▧</span><span class="bill-info"><strong>{{ bill.title }}</strong><small>{{ bill.bill_date | date:'mediumDate' }} · {{ bill.items?.length || 0 }} items</small></span><strong>{{ grandForBill(bill) | currency:'INR':'symbol':'1.2-2' }}</strong><button class="button button-small button-secondary" (click)="openBill(bill); $event.stopPropagation()">View split</button></div><div class="empty-state" *ngIf="!bills.length"><strong>No bill history</strong><p>Create your first bill to see it here.</p></div></section>
-      </section>
-    </ng-container>
-  </main>
-</div>
+    </nav>
 
-<!-- Create group modal -->
-<div class="modal-backdrop" *ngIf="showGroupForm" (click)="showGroupForm=false">
-  <section class="modal" (click)="$event.stopPropagation()"><div class="modal-heading"><div><p class="eyebrow">GET ORGANIZED</p><h2>Create a group</h2></div><button class="icon-button" (click)="showGroupForm=false">×</button></div>
-    <form (ngSubmit)="createGroup()"><label>Group name<input name="groupName" [(ngModel)]="groupName" required maxlength="60" placeholder="e.g. Weekend trip"></label><label>Description <span class="muted">(optional)</span><input name="groupDescription" [(ngModel)]="groupDescription" maxlength="140" placeholder="What is this group for?"></label><div class="modal-actions"><button type="button" class="button button-secondary" (click)="showGroupForm=false">Cancel</button><button class="button button-primary" [disabled]="busy">Create group</button></div></form>
-  </section>
-</div>
+    <main class="main-content">
 
-<!-- Add member modal -->
-<div class="modal-backdrop" *ngIf="showMemberForm" (click)="showMemberForm=false">
-  <section class="modal" (click)="$event.stopPropagation()"><div class="modal-heading"><div><p class="eyebrow">GROUP MEMBERS</p><h2>Add a member</h2></div><button class="icon-button" (click)="showMemberForm=false">×</button></div>
-    <form (ngSubmit)="addMember()"><label>Member name<input name="memberName" [(ngModel)]="memberName" required maxlength="80" placeholder="e.g. Sachin"></label><label>Email <span class="muted">(optional)</span><input type="email" name="memberEmail" [(ngModel)]="memberEmail" placeholder="name@example.com"></label><div class="modal-actions"><button type="button" class="button button-secondary" (click)="showMemberForm=false">Cancel</button><button class="button button-primary">Add member</button></div></form>
-  </section>
-</div>
+      <!-- GLOBAL MESSAGES -->
 
-<!-- Create bill modal -->
-<div class="modal-backdrop" *ngIf="showBillForm" (click)="showBillForm=false">
-  <section class="modal modal-wide" (click)="$event.stopPropagation()"><div class="modal-heading"><div><p class="eyebrow">NEW EXPENSE</p><h2>Create a bill</h2><p class="muted">Group: {{ selectedGroup?.name }}</p></div><button class="icon-button" (click)="showBillForm=false">×</button></div>
-    <form (ngSubmit)="saveBill()">
-      <div class="form-grid"><label>Bill title<input name="billTitle" [(ngModel)]="billTitle" required placeholder="e.g. Grocery shopping"></label><label>Bill date<input type="date" name="billDate" [(ngModel)]="billDate" required></label></div>
-      <div class="form-section-title"><h3>Items</h3><span class="muted">{{ itemDrafts.length }} added</span></div>
-      <div class="item-entry">
-        <label class="item-name">Item name<input name="itemName" [(ngModel)]="itemName" placeholder="e.g. Croissants"></label>
-        <label>Qty<input type="number" name="itemQty" [(ngModel)]="itemQty" min="1" step="1"></label>
-        <label>Unit price (₹)<input type="number" name="itemPrice" [(ngModel)]="itemPrice" min="0" step="0.01"></label>
-        <button type="button" class="button button-secondary add-item-button" (click)="addItem()">＋ Add</button>
+      <div class="alert alert-error" *ngIf="error">
+        {{ error }}
+
+        <button type="button" (click)="clearMessage()">×</button>
       </div>
-      <div class="assign-box"><strong>Assign this item to</strong><div class="assignee-list"><label class="check-chip" *ngFor="let member of members"><input type="checkbox" [checked]="itemAssignees.includes(member.id)" (change)="$any($event.target).checked ? itemAssignees.push(member.id) : itemAssignees.splice(itemAssignees.indexOf(member.id),1)"> {{ member.name }}</label></div><small class="muted">Select multiple members to split an item equally.</small></div>
-      <div class="draft-items" *ngIf="itemDrafts.length"><div class="draft-item" *ngFor="let item of itemDrafts; let i=index"><span><strong>{{ item.name }}</strong><small>{{ item.quantity }} × ₹{{ item.unit_price.toFixed(2) }} · {{ item.assignee_ids.length }} member(s)</small></span><strong>₹{{ (item.quantity * item.unit_price).toFixed(2) }}</strong><button type="button" class="remove-button" (click)="removeItem(i)">×</button></div></div>
-      <div class="form-grid charges-grid"><label>Discount (₹)<input type="number" name="discount" [(ngModel)]="discount" min="0" step="0.01"></label><label>Handling (₹)<input type="number" name="handling" [(ngModel)]="handling" min="0" step="0.01"></label><label>Delivery (₹)<input type="number" name="delivery" [(ngModel)]="delivery" min="0" step="0.01"></label><label>Surge (₹)<input type="number" name="surge" [(ngModel)]="surge" min="0" step="0.01"></label></div>
-      <label class="upload-label">Receipt image <span class="muted">(optional, max 8 MB)</span><input type="file" accept="image/*" (change)="onReceipt($event)"></label>
-      <div class="total-preview"><span>Subtotal · {{ itemDrafts.length }} items</span><strong>₹{{ subtotal.toFixed(2) }}</strong><span>Bill total after discount and charges</span><strong class="grand-total">₹{{ grandTotal.toFixed(2) }}</strong></div>
-      <div class="modal-actions"><button type="button" class="button button-secondary" (click)="showBillForm=false">Cancel</button><button class="button button-primary" [disabled]="busy || !members.length">{{ busy ? 'Saving…' : 'Save bill & calculate split' }}</button></div>
-    </form>
-  </section>
-</div>
 
-<!-- Bill split modal -->
-<div class="modal-backdrop" *ngIf="selectedBill" (click)="selectedBill=null">
-  <section class="modal modal-wide" (click)="$event.stopPropagation()"><div class="modal-heading"><div><p class="eyebrow">BILL SETTLEMENT</p><h2>{{ selectedBill.title }}</h2><p class="muted">{{ selectedBill.bill_date | date:'mediumDate' }} · {{ selectedGroup?.name }}</p></div><button class="icon-button" (click)="selectedBill=null">×</button></div>
-    <div class="receipt-link" *ngIf="selectedBill.receipt_url"><a [href]="selectedBill.receipt_url" target="_blank" rel="noopener">View receipt image ↗</a></div>
-    <div class="settlement-table"><div class="settlement-head"><span>Member</span><span>Items</span><span>Charges</span><span>Total</span><span>Paid</span></div>
-      <div class="settlement-row" *ngFor="let row of splitRows"><strong>{{ row.name }}</strong><span>₹{{ row.itemsTotal.toFixed(2) }}</span><span>₹{{ row.chargeShare.toFixed(2) }}</span><strong>₹{{ row.total.toFixed(2) }}</strong><label class="paid-toggle"><input type="checkbox" [checked]="row.paid" (change)="togglePaid(row,$event)"> <small>{{ row.paid ? 'Paid' : 'Pending' }}</small></label></div>
+      <div class="alert alert-success" *ngIf="notice">
+        {{ notice }}
+
+        <button type="button" (click)="clearMessage()">×</button>
+      </div>
+
+      <!-- ======================================= -->
+      <!-- OVERVIEW -->
+      <!-- ======================================= -->
+
+      <section *ngIf="activeTab === 'overview'">
+
+        <div class="page-heading">
+
+          <div>
+            <h1>Dashboard</h1>
+            <p>Manage your shared expenses in one place.</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="showGroupForm = true"
+          >
+            + Create Group
+          </button>
+
+        </div>
+
+        <div class="stats-grid">
+
+          <article class="stat-card">
+            <span>Total Groups</span>
+            <strong>{{ groups.length }}</strong>
+          </article>
+
+          <article class="stat-card">
+            <span>Total Bills</span>
+            <strong>{{ totalBills }}</strong>
+          </article>
+
+          <article class="stat-card">
+            <span>Total Expenses</span>
+            <strong>{{ totalSpend | currency:'INR':'symbol':'1.2-2' }}</strong>
+          </article>
+
+          <article class="stat-card">
+            <span>Total Members</span>
+            <strong>{{ members.length }}</strong>
+          </article>
+
+        </div>
+
+        <div class="content-card">
+
+          <div class="section-heading">
+            <h2>Your Groups</h2>
+
+            <button
+              type="button"
+              class="link-button"
+              (click)="activeTab = 'groups'"
+            >
+              View all
+            </button>
+          </div>
+
+          <div class="empty-state" *ngIf="groups.length === 0">
+            <div class="empty-icon">👥</div>
+            <h3>No groups yet</h3>
+            <p>Create your first group to start splitting expenses.</p>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="showGroupForm = true"
+            >
+              Create your first group
+            </button>
+          </div>
+
+          <div class="group-grid" *ngIf="groups.length > 0">
+
+            <button
+              type="button"
+              class="group-card"
+              *ngFor="let group of groups"
+              (click)="selectGroup(group); activeTab = 'groups'"
+            >
+
+              <span class="group-icon">👥</span>
+
+              <strong>{{ group.name }}</strong>
+
+              <span>{{ group.description }}</span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ======================================= -->
+      <!-- GROUPS -->
+      <!-- ======================================= -->
+
+      <section *ngIf="activeTab === 'groups'">
+
+        <div class="page-heading">
+
+          <div>
+            <h1>Groups</h1>
+            <p>Manage your groups and their members.</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="showGroupForm = true"
+          >
+            + New Group
+          </button>
+
+        </div>
+
+        <div class="two-column-layout">
+
+          <!-- GROUP LIST -->
+
+          <div class="content-card">
+
+            <h2>Your Groups</h2>
+
+            <div
+              class="group-list-item"
+              *ngFor="let group of groups"
+              [class.selected]="selectedGroup?.id === group.id"
+              (click)="selectGroup(group)"
+            >
+
+              <div>
+                <strong>{{ group.name }}</strong>
+                <p>{{ group.description }}</p>
+              </div>
+
+              <span>→</span>
+
+            </div>
+
+            <div class="empty-state" *ngIf="groups.length === 0">
+              No groups created yet.
+            </div>
+
+          </div>
+
+          <!-- SELECTED GROUP -->
+
+          <div class="content-card">
+
+            <ng-container *ngIf="selectedGroup">
+
+              <div class="section-heading">
+
+                <div>
+                  <h2>{{ selectedGroup.name }}</h2>
+                  <p>{{ selectedGroup.description }}</p>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  (click)="showMemberForm = true"
+                >
+                  + Add Member
+                </button>
+
+              </div>
+
+              <h3>Members ({{ members.length }})</h3>
+
+              <div
+                class="member-row"
+                *ngFor="let member of members"
+              >
+
+                <div class="avatar">
+                  {{ member.name.charAt(0).toUpperCase() }}
+                </div>
+
+                <div>
+                  <strong>{{ member.name }}</strong>
+                  <p>{{ member.email || 'No email added' }}</p>
+                </div>
+
+              </div>
+
+              <div class="empty-state" *ngIf="members.length === 0">
+                Add members to this group.
+              </div>
+
+              <div class="section-heading bill-heading">
+
+                <h3>Group Bills</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="showBillForm = true"
+                >
+                  + Add Bill
+                </button>
+
+              </div>
+
+              <div
+                class="bill-row"
+                *ngFor="let bill of bills"
+                (click)="openBill(bill)"
+              >
+
+                <div>
+                  <strong>{{ bill.title }}</strong>
+                  <p>{{ bill.bill_date | date:'mediumDate' }}</p>
+                </div>
+
+                <strong>
+                  {{ grandForBill(bill) | currency:'INR' }}
+                </strong>
+
+              </div>
+
+              <div class="empty-state" *ngIf="bills.length === 0">
+                No bills added to this group.
+              </div>
+
+            </ng-container>
+
+            <div class="empty-state" *ngIf="!selectedGroup">
+              <h3>Select a group</h3>
+              <p>Select a group to view its members and bills.</p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ======================================= -->
+      <!-- BILL HISTORY -->
+      <!-- ======================================= -->
+
+      <section *ngIf="activeTab === 'history'">
+
+        <div class="page-heading">
+          <div>
+            <h1>Bill History</h1>
+            <p>View all your previous expenses.</p>
+          </div>
+        </div>
+
+        <div class="content-card">
+
+          <div class="table-responsive">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>Bill</th>
+                  <th>Group</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                <ng-container *ngFor="let group of groups">
+
+                  <tr
+                    *ngFor="let bill of (selectedGroup?.id === group.id ? bills : [])"
+                  >
+
+                    <td>{{ bill.title }}</td>
+                    <td>{{ group.name }}</td>
+                    <td>{{ bill.bill_date | date:'mediumDate' }}</td>
+
+                    <td>
+                      {{ grandForBill(bill) | currency:'INR' }}
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        class="link-button"
+                        (click)="selectGroup(group); openBill(bill)"
+                      >
+                        View
+                      </button>
+                    </td>
+
+                  </tr>
+
+                </ng-container>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <div class="empty-state" *ngIf="bills.length === 0">
+            No bill history available.
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ======================================= -->
+      <!-- SELECTED BILL DETAILS -->
+      <!-- ======================================= -->
+
+      <section class="content-card bill-details" *ngIf="selectedBill">
+
+        <div class="section-heading">
+
+          <div>
+            <h2>{{ selectedBill.title }}</h2>
+            <p>{{ selectedBill.bill_date | date:'mediumDate' }}</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-whatsapp"
+            (click)="shareWhatsApp()"
+          >
+            Share on WhatsApp
+          </button>
+
+        </div>
+
+        <h3>Individual Split</h3>
+
+        <div class="table-responsive">
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Amount</th>
+                <th>Payment Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              <tr *ngFor="let row of splitRows">
+
+                <td>{{ row.name }}</td>
+
+                <td>
+                  {{ row.total | currency:'INR' }}
+                </td>
+
+                <td>
+                  <label class="payment-checkbox">
+                    <input
+                      type="checkbox"
+                      [checked]="payments[row.memberId] || false"
+                      (change)="togglePaid(row, $event)"
+                    />
+                    {{ payments[row.memberId] ? 'Paid' : 'Pending' }}
+                  </label>
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <div class="bill-total">
+          <span>Bill Total</span>
+          <strong>
+            {{ grandForBill(selectedBill) | currency:'INR' }}
+          </strong>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ========================================= -->
+    <!-- CREATE GROUP MODAL -->
+    <!-- ========================================= -->
+
+    <div class="modal-backdrop" *ngIf="showGroupForm">
+
+      <div class="modal-card">
+
+        <div class="section-heading">
+          <h2>Create Group</h2>
+
+          <button
+            type="button"
+            class="close-button"
+            (click)="showGroupForm = false"
+          >
+            ×
+          </button>
+        </div>
+
+        <form (ngSubmit)="createGroup()">
+
+          <div class="form-group">
+            <label>Group Name</label>
+
+            <input
+              type="text"
+              name="groupName"
+              [(ngModel)]="groupName"
+              placeholder="Example: Friends Trip"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+
+            <textarea
+              name="groupDescription"
+              [(ngModel)]="groupDescription"
+              placeholder="Enter group description"
+            ></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="showGroupForm = false"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="busy"
+            >
+              Create Group
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+
     </div>
-    <div class="settlement-total"><span>Bill total</span><strong>₹{{ grandForBill(selectedBill).toFixed(2) }}</strong></div>
-    <div class="modal-actions"><button class="button button-secondary" (click)="shareWhatsApp()">↗ Share on WhatsApp</button><button class="button button-primary" (click)="selectedBill=null">Done</button></div>
-  </section>
+
+    <!-- ========================================= -->
+    <!-- ADD MEMBER MODAL -->
+    <!-- ========================================= -->
+
+    <div class="modal-backdrop" *ngIf="showMemberForm">
+
+      <div class="modal-card">
+
+        <div class="section-heading">
+          <h2>Add Member</h2>
+
+          <button
+            type="button"
+            class="close-button"
+            (click)="showMemberForm = false"
+          >
+            ×
+          </button>
+        </div>
+
+        <form (ngSubmit)="addMember()">
+
+          <div class="form-group">
+            <label>Member Name</label>
+
+            <input
+              type="text"
+              name="memberName"
+              [(ngModel)]="memberName"
+              placeholder="Enter member name"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Email (Optional)</label>
+
+            <input
+              type="email"
+              name="memberEmail"
+              [(ngModel)]="memberEmail"
+              placeholder="Enter email"
+            />
+          </div>
+
+          <div class="modal-actions">
+
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="showMemberForm = false"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+            >
+              Add Member
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- CREATE BILL MODAL -->
+    <!-- ========================================= -->
+
+    <div class="modal-backdrop" *ngIf="showBillForm">
+
+      <div class="modal-card modal-large">
+
+        <div class="section-heading">
+
+          <h2>Create Bill</h2>
+
+          <button
+            type="button"
+            class="close-button"
+            (click)="showBillForm = false"
+          >
+            ×
+          </button>
+
+        </div>
+
+        <form (ngSubmit)="saveBill()">
+
+          <div class="form-group">
+            <label>Bill Title</label>
+
+            <input
+              type="text"
+              name="billTitle"
+              [(ngModel)]="billTitle"
+              placeholder="Example: Dinner"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Bill Date</label>
+
+            <input
+              type="date"
+              name="billDate"
+              [(ngModel)]="billDate"
+              required
+            />
+          </div>
+
+          <h3>Add Items</h3>
+
+          <div class="form-group">
+            <label>Item Name</label>
+
+            <input
+              type="text"
+              name="itemName"
+              [(ngModel)]="itemName"
+              placeholder="Enter item name"
+            />
+          </div>
+
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label>Quantity</label>
+
+              <input
+                type="number"
+                name="itemQty"
+                [(ngModel)]="itemQty"
+                min="1"
+                step="1"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Unit Price (₹)</label>
+
+              <input
+                type="number"
+                name="itemPrice"
+                [(ngModel)]="itemPrice"
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+          </div>
+
+          <div class="form-group">
+            <label>Assign Members</label>
+
+            <div class="assignee-list">
+
+              <label
+                class="assignee-option"
+                *ngFor="let member of members"
+              >
+
+                <input
+                  type="checkbox"
+                  [checked]="itemAssignees.includes(member.id)"
+                  (change)="
+                    $any($event.target).checked
+                      ? itemAssignees.push(member.id)
+                      : itemAssignees.splice(itemAssignees.indexOf(member.id), 1)
+                  "
+                />
+
+                {{ member.name }}
+
+              </label>
+
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-outline"
+            (click)="addItem()"
+          >
+            + Add Item
+          </button>
+
+          <!-- ITEMS LIST -->
+
+          <div class="item-list" *ngIf="itemDrafts.length > 0">
+
+            <h3>Added Items</h3>
+
+            <div
+              class="item-row"
+              *ngFor="let item of itemDrafts; let i = index"
+            >
+
+              <div>
+                <strong>{{ item.name }}</strong>
+
+                <p>
+                  {{ item.quantity }} ×
+                  {{ item.unit_price | currency:'INR' }}
+                </p>
+              </div>
+
+              <strong>
+                {{ item.quantity * item.unit_price | currency:'INR' }}
+              </strong>
+
+              <button
+                type="button"
+                class="remove-button"
+                (click)="removeItem(i)"
+              >
+                Remove
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- ADDITIONAL CHARGES -->
+
+          <h3>Discounts and Additional Charges</h3>
+
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label>Discount (₹)</label>
+
+              <input
+                type="number"
+                name="discount"
+                [(ngModel)]="discount"
+                min="0"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Handling Charge (₹)</label>
+
+              <input
+                type="number"
+                name="handling"
+                [(ngModel)]="handling"
+                min="0"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Delivery Charge (₹)</label>
+
+              <input
+                type="number"
+                name="delivery"
+                [(ngModel)]="delivery"
+                min="0"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Surge Charge (₹)</label>
+
+              <input
+                type="number"
+                name="surge"
+                [(ngModel)]="surge"
+                min="0"
+              />
+            </div>
+
+          </div>
+
+          <!-- RECEIPT -->
+
+          <div class="form-group">
+
+            <label>Upload Receipt (Optional)</label>
+
+            <input
+              type="file"
+              accept="image/*"
+              (change)="onReceipt($event)"
+            />
+
+            <small *ngIf="receiptFile">
+              {{ receiptFile.name }}
+            </small>
+
+          </div>
+
+          <!-- BILL SUMMARY -->
+
+          <div class="bill-summary">
+
+            <div>
+              <span>Subtotal</span>
+              <strong>{{ subtotal | currency:'INR' }}</strong>
+            </div>
+
+            <div>
+              <span>Discount</span>
+              <strong>-{{ discount | currency:'INR' }}</strong>
+            </div>
+
+            <div>
+              <span>Handling</span>
+              <strong>{{ handling | currency:'INR' }}</strong>
+            </div>
+
+            <div>
+              <span>Delivery</span>
+              <strong>{{ delivery | currency:'INR' }}</strong>
+            </div>
+
+            <div>
+              <span>Surge</span>
+              <strong>{{ surge | currency:'INR' }}</strong>
+            </div>
+
+            <div class="summary-total">
+              <span>Grand Total</span>
+              <strong>{{ grandTotal | currency:'INR' }}</strong>
+            </div>
+
+          </div>
+
+          <div class="modal-actions">
+
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="showBillForm = false"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="busy || !itemDrafts.length"
+            >
+              {{ busy ? 'Saving...' : 'Save Bill' }}
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
 </div>
