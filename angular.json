@@ -3,26 +3,28 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "spliteasy": {
+    "spliteasy-angular": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular/build:application",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/spliteasy",
+            "outputPath": "dist/spliteasy-angular",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [{"glob": "**/*", "input": "public"}],
             "styles": ["src/styles.scss"],
-            "assets": []
+            "scripts": []
           },
           "configurations": {
             "production": {
-              "budgets": [{"type":"initial","maximumWarning":"1.5mb","maximumError":"3mb"}],
+              "budgets": [{"type":"initial","maximumWarning":"1mb","maximumError":"2mb"}],
               "outputHashing": "all"
             },
             "development": {"optimization": false, "extractLicenses": false, "sourceMap": true}
@@ -30,10 +32,10 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
+          "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": {"buildTarget":"spliteasy:build:production"},
-            "development": {"buildTarget":"spliteasy:build:development"}
+            "production": {"buildTarget":"spliteasy-angular:build:production"},
+            "development": {"buildTarget":"spliteasy-angular:build:development"}
           },
           "defaultConfiguration": "development"
         }
