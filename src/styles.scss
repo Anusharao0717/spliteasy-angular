@@ -1,8 +1,0 @@
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg)}
-body{font-size:14px;-webkit-font-smoothing:antialiased}
-button,input{font:inherit}
-button:focus-visible,a:focus-visible{outline:3px solid #a18aff;outline-offset:2px}
-
-:root{--bg:#f6f7fb;--surface:#fff;--soft:#f7f7fb;--input:#fff;--text:#202136;--muted:#85879a;--line:#ececf2;--primary:#7558ed;--primary-soft:#f0edff;--shadow:0 15px 45px #28204412}
-:root.dark-theme{--bg:#141520;--surface:#1d1f2d;--soft:#252738;--input:#171925;--text:#f1f1f8;--muted:#a0a2b5;--line:#303244;--primary:#a18aff;--primary-soft:#30294b;--shadow:0 15px 45px #0004}
