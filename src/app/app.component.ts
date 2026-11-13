@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from './supabase.service';
-import { Bill, BillItem, Group, Member, SplitRow } from './models';
+import { Bill, BillItem, BillPayment, Group, Member, SplitRow } from './models';
 import { calculateSplit, money } from './bill-calculator';
 
 @Component({
@@ -302,6 +302,19 @@ export class AppComponent implements OnInit {
       bill.handling_charge, bill.delivery_charge, bill.surge_charge,
       payments.filter(p => p.paid).map(p => p.member_id)
     );
+  }
+
+  async openHistoryBill(bill: Bill, groupId: string): Promise<void> {
+    const group = this.groups.find(item => item.id === groupId);
+
+    if (!group) {
+      this.error = 'Unable to find the group for this bill.';
+      return;
+    }
+
+    await this.selectGroup(group);
+    await this.openBill(bill);
+    this.activeTab = 'history';
   }
 
   async togglePaid(row: SplitRow, event: Event): Promise<void> {

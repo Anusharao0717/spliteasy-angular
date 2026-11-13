@@ -87,7 +87,7 @@
         <div class="page-head"><div><p class="eyebrow">YOUR ACTIVITY</p><h1>Bill history</h1><p class="muted">Bills across all your groups.</p></div></div>
         <div class="panel table-wrap">
           <table><thead><tr><th>Bill</th><th>Group</th><th>Date</th><th>Total</th><th></th></tr></thead>
-            <tbody><tr *ngFor="let entry of historyBills"><td>{{ entry.bill.title }}</td><td>{{ entry.groupName }}</td><td>{{ entry.bill.bill_date | date:'mediumDate' }}</td><td>{{ grandForBill(entry.bill) | currency:'INR' }}</td><td><button class="text-button" type="button" (click)="selectGroup(groups.find(g=>g.id===entry.bill.group_id)!); openBill(entry.bill)">View split</button></td></tr></tbody>
+            <tbody><tr *ngFor="let entry of historyBills"><td>{{ entry.bill.title }}</td><td>{{ entry.groupName }}</td><td>{{ entry.bill.bill_date | date:'mediumDate' }}</td><td>{{ grandForBill(entry.bill) | currency:'INR' }}</td><td><button class="text-button" type="button" (click)="openHistoryBill(entry.bill, entry.bill.group_id)">View split</button></td></tr></tbody>
           </table>
           <div class="empty" *ngIf="!historyBills.length"><h3>No bills yet</h3><p>Your saved bills will appear here.</p></div>
         </div>
